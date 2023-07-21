@@ -35,14 +35,20 @@ public struct BackgroundRemoval {
         
         /// init model and get result
         let model = try? LaLabsu2netp.init()
-        let result = try? model?.prediction(in_0: buffer(from: resize)!)
-        let out = UIImage(pixelBuffer: result!.out_p1)
+        guard let buffer = buffer(from: resize),
+              let result = try? model?.prediction(in_0: buffer),
+                let out = UIImage(pixelBuffer: result.out_p1)
+        else { return image }
+        
         
         /// scale the image again to the longest dimension in the input image,
-        let scaledOut = out!.scaled(to: sz, scalingMode: .aspectFit)
+        let scaledOut = out.scaled(to: sz, scalingMode: .aspectFit)
                 
+        guard let inverted = scaledOut.invertedImage() else {
+            return image
+        }
         // please pass this to the output image if you need to see the masked image
-        let finalResult = scaledImage.maskImage(withMask: scaledOut.invertedImage()!)
+        let finalResult = scaledImage.maskImage(withMask: inverted)
 
         return maskOnly ? scaledOut : finalResult
     }
